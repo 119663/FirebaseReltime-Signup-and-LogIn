@@ -1,0 +1,119 @@
+package com.evelyne.labs.ssp2;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.annotation.SuppressLint;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+public class SpSignUp extends AppCompatActivity {
+
+    private TextView loginsp;
+    private Button loginBtnsp;
+
+    //create object of DatabaseReference class to access firebase's Realtime Database
+    //FirebaseDatabase database = FirebaseDatabase.getInstance();
+    //DatabaseReference myRef = database.getReference("");
+
+    DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReferenceFromUrl
+            ("https://ssp2-baa60-default-rtdb.firebaseio.com/");
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_sp_sign_up);
+       final EditText fullnamesp  = findViewById(R.id.fullnamesp);
+         final EditText phonenumbersp =  findViewById(R.id.phonenumbersp);
+        final EditText locationsp  = findViewById(R.id.locationsp);
+         final EditText emailaddresssp  = findViewById(R.id.emailaddresssp);
+         EditText passwordsp  = findViewById(R.id.passwordsp);
+       final EditText confirmpasswordsp  = findViewById(R.id.confirmpasswordsp);
+         final Button registerBtnsp = findViewById(R.id.registersp);
+
+ @SuppressLint({"MissingInflatedId", "LocalSuppress"}) final TextView loginBtnsp = findViewById(R.id.login);
+
+        registerBtnsp.setOnClickListener(view -> {
+
+            //get data from edits
+            final String fullnamesptxt = fullnamesp.getText().toString();
+            final String phonenumsptxt = phonenumbersp.getText().toString();
+            final String locationsptxt = locationsp.getText().toString();
+            final String emailaddsptxt = emailaddresssp.getText().toString();
+            final String passwordrsptxt = passwordsp.getText().toString();
+            final String confirmpasswordsptxt = confirmpasswordsp.getText().toString();
+
+            //check if user fills all fields before sending data to firebase
+            if(fullnamesptxt.isEmpty() ||phonenumsptxt.isEmpty() ||
+                    locationsptxt.isEmpty() ||emailaddsptxt.isEmpty() ||passwordrsptxt.isEmpty() ||
+                    confirmpasswordsptxt.isEmpty()){
+                Toast.makeText(SpSignUp.this, "Please fill all fields", Toast.LENGTH_SHORT
+                ).show();
+                // check if passwords are matching
+            } else if(!passwordrsptxt.equals(confirmpasswordsptxt))
+            {
+                Toast.makeText(SpSignUp.this, "Passwords not matching", Toast.LENGTH_SHORT)
+                        .show();
+            }
+            else{
+
+                databaseReference.child("serviceproviders").addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+                        //check if phone is not registered before
+                        if(snapshot.hasChild(phonenumsptxt)){
+                            Toast.makeText(SpSignUp.this, "Phone number is already registered", Toast.LENGTH_SHORT)
+                                    .show();
+                        }
+                        else{
+                            //sending data to firebase realtime database
+                            //phone number is unique identifier so comes under all other details
+                            databaseReference.child("serviceproviders").child(phonenumsptxt).child("fullname").setValue(fullnamesptxt);
+                            databaseReference.child("serviceproviders").child(phonenumsptxt).child("location").setValue(locationsptxt);
+                            databaseReference.child("serviceproviders").child(phonenumsptxt).child("emailaddress").setValue(emailaddsptxt);
+                            databaseReference.child("serviceproviders").child(phonenumsptxt).child("password").setValue(passwordrsptxt);
+                            databaseReference.child("serviceproviders").child(phonenumsptxt).child("confirmpassword").setValue(confirmpasswordsptxt);
+
+                            //show success message and finish ativity
+                            Toast.makeText(SpSignUp.this,"User successfully registered", Toast.LENGTH_SHORT).show();
+                            startActivity(new Intent(SpSignUp.this, SpLogIn.class));
+                            finish();
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+
+                    }
+
+                    //open register
+
+
+                });
+
+
+            }
+            // loginBtn.setOnClickListener(new View.OnClickListener() {
+            // @Override
+            //public void onClick(View view) {
+            // finish();
+            // }
+            // });
+            //open login
+            registerBtnsp.setOnClickListener(view1 -> startActivity(new Intent(SpSignUp.this, SpLogIn.class)));
+
+        });
+    }
+}
